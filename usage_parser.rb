@@ -1,5 +1,10 @@
 class UsageParser
   class << self
+    MNC_RANGE = 0..3
+    BYTES_USED_RANGE = 4..7
+    CELLID_RANGE = 8..15
+    IP_RANGE = 16..-1
+
     def parse(input)
       return [string_parse(input)] if input.kind_of?(String)
       return array_parse(input) if input.kind_of?(Array)
@@ -9,14 +14,9 @@ class UsageParser
     def string_parse(input)
       input_parts = input.split(',')
       id = input_parts.first
-      if id.end_with?('4')
-        validated_input = extended_parse_validator(input_parts)
-      elsif id.end_with?('6')
-        validated_input = hex_parse_validator(input_parts)
-      else
-        validated_input = basic_parse_validator(input_parts)
-      end
-      return output(validated_input)
+      return output(extended_parse_validator(input_parts)) if id.end_with?('4')
+      return output(hex_parse_validator(input_parts)) if id.end_with?('6')
+      return output(basic_parse_validator(input_parts))
     end
 
     def array_parse(input)
@@ -59,10 +59,10 @@ class UsageParser
       id, hex = input_parts
       raise StandardError("ID is not an integer") unless id !~ /\D/
       raise StandardError("Invalid hexadecimal") if hex.length != 24
-      mnc = hex[0..3].to_i(16)
-      bytes_used = hex[4..7].to_i(16)
-      cellid = hex[8..15].to_i(16)
-      ip = ip_parse(hex[16..-1])
+      mnc = hex[MNC_RANGE].to_i(16)
+      bytes_used = hex[BYTES_USED_RANGE].to_i(16)
+      cellid = hex[CELLID_RANGE].to_i(16)
+      ip = ip_parse(hex[IP_RANGE])
       return { id: id.to_i, mnc: mnc, bytes_used: bytes_used, cellid: cellid, ip: ip }
     end
 
